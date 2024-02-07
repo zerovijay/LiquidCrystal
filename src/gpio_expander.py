@@ -4,10 +4,7 @@ from micropython import const
 
 
 class GpioExpander:
-    # Valid device addresses for MicroPython_PCF8574T 'NXP PCF8574T'
-    __VALID_ADDR: tuple = const((0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27))
-
-    # Constants representing pin modes and range.
+    # Constants representing pin modes and pin range.
     INPUT, OUTPUT = const((1, 0))
     PIN_MIN, PIN_MAX = const((0, 7))
 
@@ -20,19 +17,23 @@ class GpioExpander:
         :raises ValueError: If the provided address is not valid.
         :raises TypeError: If the provided port is not a valid I2C object.
         """
-        if addr not in self.__VALID_ADDR:
+        # Check if the provided address is within the valid range for PCF8574.
+        if not (0x20 <= addr <= 0x27 or 0x38 <= addr <= 0x3F):
             raise ValueError(f"Invalid device address: {hex(addr)}")
 
+        # Ensure that the provided port is a valid I2C object.
         if not isinstance(port, I2C):
             raise TypeError("Invalid I2C object! Please provide a valid I2C object.")
 
-        self.__i2c_device: I2C = port  # I2C object
-        self.__io_exp_addr: int = const(addr)
-        self.__io_write: int = 0x00  # Write buffer
-        self.__io_config: int = 0x00  # Config buffer
+        # Initialize instance variables.
+        self.__i2c_device: I2C = port  # I2C object.
+        self.__io_exp_addr: int = const(addr)  # Device address.
+        self.__io_write: int = 0x00  # Write buffer.
+        self.__io_config: int = 0x00  # Configuration buffer.
 
-        if addr not in self.__i2c_device.scan():
-            raise OSError("PCF8574T not found on the I2C bus!")
+        # Check if the device is present on the I2C bus.
+        if self.__io_exp_addr not in self.__i2c_device.scan():
+            raise OSError("Device not found on the I2C bus!")
 
     def __expander_read(self) -> int:
         """
@@ -43,7 +44,7 @@ class GpioExpander:
         """
         try:
             data: bytes = self.__i2c_device.readfrom(self.__io_exp_addr, 1)
-            return ustruct.unpack(">B", data)[0]  # Interpret the byte as an unsigned int.
+            return ustruct.unpack(">B", data)[0]  # Interpret the byte as an unsigned integer.
         except OSError as read_error:
             raise RuntimeError(f"Expander read error: {read_error}")
 
@@ -75,7 +76,7 @@ class GpioExpander:
         else:
             self.__io_config &= ~(1 << pin_num)
 
-        self.__expander_write(self.__io_config)  # Update the new buffer.
+        self.__expander_write(self.__io_config)  # Update the configuration buffer.
 
     def digital_write(self, pin_num: int, value: int) -> None:
         """
@@ -94,8 +95,7 @@ class GpioExpander:
 
         # Set or clear the corresponding bit in the write buffer based on the specified value.
         self.__io_write = (self.__io_write & ~(1 << pin_num)) | (value << pin_num)
-
-        self.__expander_write(self.__io_write)  # Update the new buffer.
+        self.__expander_write(self.__io_write)  # Update the write buffer.
 
     def digital_read(self, pin_num: int) -> int:
         """
@@ -113,15 +113,10 @@ class GpioExpander:
         if not (self.__io_config >> pin_num) & 0x01:
             raise ValueError(f"Pin {pin_num} is not configured as an input!")
 
-        # Some chips have reading issues, so try to catch the error.
-        try:
-            status: int = self.__expander_read()
-        except RuntimeError as read_error:
-            raise RuntimeError(f"Digital read error: {read_error}")
+        status: int = self.__expander_read()  # Read the GPIO status.
+        return (status >> pin_num) & 0x01  # Extract a bit from the byte for the pin.
 
-        return (status >> pin_num) & 0x01  # Extract a bit from the byte for the pin
-
-    def __del__(self):
+    def __del__(self) -> None:
         """
         Clean up and deinitialize the I2C interface.
 

@@ -11,7 +11,7 @@ class LiquidCrystal_I2C(HD44780API):
     # Pin mapping for RS, RW, EN, and BACKLIGHT
     __RS, __RW, __EN, __BACKLIGHT = const((0, 1, 2, 3))
 
-    # Font size constants
+    # Macro for Font size
     FONT5X8, FONT5X10 = const((Instruction.FONT5X8, Instruction.FONT5X10))
 
     def __init__(

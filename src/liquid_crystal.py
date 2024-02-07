@@ -12,9 +12,7 @@ class LiquidCrystal(HD44780API):
 
     FONT5X8, FONT5X10 = const((Instruction.FONT5X8, Instruction.FONT5X10))
 
-    def __init__(
-        self, gpio_list: list[int], row: int = 2, col: int = 16, font: int = FONT5X8
-    ) -> None:
+    def __init__(self, gpio_list: tuple, row: int = 2, col: int = 16, font: int = FONT5X8) -> None:
         """
         Initializes an interface to control an HD44780-compatible LCD using a specified set of GPIO pins.
 
@@ -28,7 +26,7 @@ class LiquidCrystal(HD44780API):
 
         if len(gpio_list) not in self.__GPIO_LEN:
             raise ValueError(
-                f"Invalid GPIO list! Expected {self.__GPIO_LEN} GPIO pins, but received {len(gpio_list)}."
+                f"Invalid GPIO list! Expected {self.__GPIO_LEN} GPIO pins, but received {len(gpio_list)} pins."
             )
 
         # predict mode base on len of gpio_list
@@ -84,8 +82,8 @@ class LiquidCrystal(HD44780API):
             msb_data: int = (data >> 4) & 0x0F
             lsb_data: int = data & 0x0F
 
-            self.__write_gpio(msb_data, 4)
-            self.__write_gpio(lsb_data, 4)
+            self.__write_gpio(msb_data, 4)  # MSB
+            self.__write_gpio(lsb_data, 4)  # LSB
             return
 
         self.__write_gpio(data)  # Write 8-bit mode

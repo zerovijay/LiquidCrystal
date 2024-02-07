@@ -186,7 +186,7 @@ class HD44780API:
         for char in str(data):
             self.__send_instructions(ord(char), rs=True)  # RS: 1 -> Sending data
 
-    def custom_character(self, ram_addr: int, bit_map: list[int] = None) -> None:
+    def custom_character(self, ram_addr: int, bit_map: tuple = None) -> None:
         """
         Defines a custom character at the specified CGRAM address with the given bit map.
 
@@ -204,23 +204,12 @@ class HD44780API:
 
         # Handle the case where bit_map is not provided
         if bit_map is None:
-            # Access the stored character from the CGRAM address.
             self.__send_instructions(ram_addr, rs=True)  # RS: 1 -> Sending data
             return
 
         # Check if the length of bit_map is within the valid range
         if not 0 <= len(bit_map) <= 8:
             raise IndexError(f"Invalid bit_map length! It must be in the range of 0 to 8.")
-
-        # Find the indices of elements in bit_map that are not integers
-        invalid_indices: list = [i for i, bit in enumerate(bit_map) if not isinstance(bit, int)]
-
-        # If there are invalid indices, raise an error with details about the mismatches
-        if invalid_indices:
-            invalid_values: list = [bit_map[i] for i in invalid_indices]
-            raise ValueError(
-                f"Invalid bit_map! Elements at indices {invalid_indices} have non-integer values: {invalid_values}."
-            )
 
         # Set the CGRAM address using the provided ram_addr
         self.__send_instructions(Instruction.CGRAM_ADDR | (ram_addr << 3))

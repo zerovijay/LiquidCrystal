@@ -4,8 +4,8 @@ from LiquidCrystal import LiquidCrystal
 
 
 def main() -> None:
-    gpio_list: list[int] = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]  # 8bit mode
-    # gpio_list: list[int] = [2, 3, 4, 9, 10, 11, 12] # 4bit mode
+    gpio_list: tuple = (2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)  # 8bit mode
+    # gpio_list: tuple = (2, 3, 4, 9, 10, 11, 12) # 4bit mode
 
     # Initialize LCD with default parameters (2 rows, 16 columns, 5x8 font)
     lcd = LiquidCrystal(gpio_list)
