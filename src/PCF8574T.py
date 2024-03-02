@@ -3,12 +3,13 @@ from machine import I2C
 from micropython import const
 
 
-class GpioExpander:
-    # Constants representing pin modes and pin range.
-    INPUT, OUTPUT = const((1, 0))
+class PCF8574:
+    # Constants (MACRO) representing pin modes and pin range.
+    DEFAULT_ADDR: int = const(0x20)
     PIN_MIN, PIN_MAX = const((0, 7))
+    INPUT, INPUT_PULLUP, OUTPUT, OUTPUT_PULLUP = const((1, 1, 0, 1))  # Pin modes.
 
-    def __init__(self, port: I2C, addr: int = 0x27) -> None:
+    def __init__(self, port: I2C, addr: int = DEFAULT_ADDR) -> None:
         """
         Initialize the PCF8574 instance.
 
@@ -35,7 +36,7 @@ class GpioExpander:
         if self.__io_exp_addr not in self.__i2c_device.scan():
             raise OSError("Device not found on the I2C bus!")
 
-    def __expander_read(self) -> int:
+    def __expander_read(self, fmt: str = ">B") -> int:
         """
         Read the current state of all pins from the I/O expander.
 
@@ -44,7 +45,7 @@ class GpioExpander:
         """
         try:
             data: bytes = self.__i2c_device.readfrom(self.__io_exp_addr, 1)
-            return ustruct.unpack(">B", data)[0]  # Interpret the byte as an unsigned integer.
+            return ustruct.unpack(fmt, data)[0]  # Interpret the byte as an unsigned integer.
         except OSError as read_error:
             raise RuntimeError(f"Expander read error: {read_error}")
 
@@ -60,6 +61,24 @@ class GpioExpander:
         except OSError as write_error:
             raise RuntimeError(f"Expander write error: {write_error}")
 
+    def read_byte(self) -> int:
+        """
+        Read the current state of all pins from the I/O expander.
+
+        :return: The status byte represents the state of all pins.
+        :raises RuntimeError: If there is an error during the read operation.
+        """
+        return self.__expander_read()
+
+    def write_byte(self, byte: int) -> None:
+        """
+        Write data to the I/O expander.
+
+        :param byte: The byte to be written to the I/O expander.
+        :raises RuntimeError: If the expander fails to write.
+        """
+        self.__expander_write(byte)
+
     def pin_mode(self, pin_num: int, mode: int) -> None:
         """
         Set the mode (INPUT or OUTPUT) for a specific pin.
@@ -71,11 +90,11 @@ class GpioExpander:
         if not self.PIN_MIN <= pin_num <= self.PIN_MAX:
             raise ValueError(f"Invalid pin number: {pin_num}")
 
-        if mode == self.INPUT:
-            self.__io_config |= 1 << pin_num
-        else:
-            self.__io_config &= ~(1 << pin_num)
+        if mode not in (self.INPUT, self.INPUT_PULLUP, self.OUTPUT, self.OUTPUT_PULLUP):
+            raise ValueError(f"Invalid pin mode to configure the pin {pin_num}")
 
+        # Set or clear the corresponding bit in the io configuration buffer based on the specified mode.
+        self.__io_write = (self.__io_write & ~(1 << pin_num)) | (mode << pin_num)
         self.__expander_write(self.__io_config)  # Update the configuration buffer.
 
     def digital_write(self, pin_num: int, value: int) -> None:
@@ -89,9 +108,6 @@ class GpioExpander:
         """
         if not self.PIN_MIN <= pin_num <= self.PIN_MAX:
             raise ValueError(f"Invalid pin number: {pin_num}")
-
-        if (self.__io_config >> pin_num) & 0x01:
-            raise ValueError(f"Pin {pin_num} is not configured as an output!")
 
         # Set or clear the corresponding bit in the write buffer based on the specified value.
         self.__io_write = (self.__io_write & ~(1 << pin_num)) | (value << pin_num)
@@ -109,9 +125,6 @@ class GpioExpander:
         """
         if not self.PIN_MIN <= pin_num <= self.PIN_MAX:
             raise ValueError(f"Invalid pin number: {pin_num}")
-
-        if not (self.__io_config >> pin_num) & 0x01:
-            raise ValueError(f"Pin {pin_num} is not configured as an input!")
 
         status: int = self.__expander_read()  # Read the GPIO status.
         return (status >> pin_num) & 0x01  # Extract a bit from the byte for the pin.

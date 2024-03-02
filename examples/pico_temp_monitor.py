@@ -21,7 +21,7 @@ def main() -> None:
         lcd.set_cursor(1, 0)
         lcd.print("       ")  # For avoid. clearing entire display.
         lcd.set_cursor(1, 0)
-        lcd.print(f"temp: {temperature:.2f}{chr(0xDF)}C")
+        lcd.print(f"temp: {temperature:.2f}°C")
         utime.sleep_ms(60)  # Update the new readings.
 
 

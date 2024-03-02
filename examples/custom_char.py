@@ -3,12 +3,10 @@ from machine import I2C, Pin
 
 from LiquidCrystal import LiquidCrystal_I2C
 
-custom_char: tuple = (0x00, 0x04, 0x0E, 0x0E, 0x0E, 0x1F, 0x04, 0x00)
-
 
 def main() -> None:
-    i2c: I2C = I2C(0, scl=Pin(1), sda=Pin(0), freq=100000)  # I2C object
-    lcd = LiquidCrystal_I2C(port=i2c)  # LCD object
+    i2c: I2C = I2C(0, scl=Pin(1), sda=Pin(0), freq=100000)  # I2C object.
+    lcd = LiquidCrystal_I2C(port=i2c)  # LCD object.
 
     lcd.backlight(status=True)
     lcd.clear_display()
@@ -28,7 +26,7 @@ def main() -> None:
         lcd.clear_display()
         for i in range(8):
             lcd.set_cursor(0, 0)
-            lcd.custom_character(i)
+            lcd.print(chr(i))
             utime.sleep_ms(150)
 
 

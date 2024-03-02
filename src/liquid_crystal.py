@@ -7,8 +7,8 @@ from .liquid_crystal_api import HD44780API
 
 
 class LiquidCrystal(HD44780API):
-    __GPIO_LEN: tuple = const((7, 11))  # GPIO list maximum length
-    __RS, __RW, __EN = const((0, 1, 2))  # RS, RW and EN Pin mapping
+    __GPIO_LEN: tuple = const((7, 11))  # GPIO list maximum length.
+    __RS, __RW, __EN = const((0, 1, 2))  # RS, RW and EN Pin mapping.
 
     FONT5X8, FONT5X10 = const((Instruction.FONT5X8, Instruction.FONT5X10))
 
@@ -29,16 +29,14 @@ class LiquidCrystal(HD44780API):
                 f"Invalid GPIO list! Expected {self.__GPIO_LEN} GPIO pins, but received {len(gpio_list)} pins."
             )
 
-        # predict mode base on len of gpio_list
-        self.__data_len: int = (
-            Instruction.LEN_8BIT if len(gpio_list) >= 11 else Instruction.LEN_4BIT
-        )
+        # predict mode base on len of gpio_list.
+        self.__data_len: int = Instruction.LEN_8BIT if len(gpio_list) >= 11 else Instruction.LEN_4BIT
 
-        # List of 'Pin' objects, row and font size
+        # List of 'Pin' objects, row and font size.
         self.__gpio_list: list[Pin] = [Pin(pin, Pin.OUT) for pin in gpio_list]
         self.__num_row = Instruction.LINE2 if row >= 2 else Instruction.LINE1
         self.__font_size: int = font
-        self.__init_lcd()  # Initialize the LCD
+        self.__init_lcd()  # Initialize the LCD.
 
     def __toggle_enable(self) -> None:
         """
@@ -46,8 +44,6 @@ class LiquidCrystal(HD44780API):
 
         :return: None
         """
-        self.__gpio_list[self.__EN].value(False)
-        utime.sleep_us(40)
         self.__gpio_list[self.__EN].value(True)
         utime.sleep_us(40)
         self.__gpio_list[self.__EN].value(False)
@@ -63,7 +59,7 @@ class LiquidCrystal(HD44780API):
         for pin, bit in enumerate(range(mode)):
             self.__gpio_list[3:][pin].value((write_data >> bit) & 0x01)
 
-        # Toggle to enable. To execute previously received data
+        # Toggle to enable. To execute previously received data.
         self.__toggle_enable()
 
     def __send_instructions(self, data: int, rs: bool = False) -> None:
@@ -86,7 +82,7 @@ class LiquidCrystal(HD44780API):
             self.__write_gpio(lsb_data, 4)  # LSB
             return
 
-        self.__write_gpio(data)  # Write 8-bit mode
+        self.__write_gpio(data)  # Write 8-bit mode.
 
     @staticmethod
     def backlight(pin: int, status: bool) -> None:
@@ -100,7 +96,7 @@ class LiquidCrystal(HD44780API):
         if not isinstance(status, bool):
             raise ValueError("The backlight 'status' must be a boolean value (True or False).")
 
-        backlight = Pin(pin, Pin.OUT)  # Backlight object
+        backlight: Pin = Pin(pin, Pin.OUT)  # Backlight object
         backlight.value(status)
 
     def __init_lcd(self) -> None:
@@ -109,24 +105,22 @@ class LiquidCrystal(HD44780API):
 
         :return: None
         """
-        # Wait for more than 40 ms after VCC rises to 2.7 V
+        # Wait for more than 40 ms after VCC rises to 2.7 V.
         utime.sleep_ms(50)
         self.__send_instructions(0x30)  # Function set (Interface is 8 bits long.)
-        utime.sleep_ms(5)  # Wait for more than 4.1 ms
+        utime.sleep_ms(5)  # Wait for more than 4.1 ms.
         self.__send_instructions(0x30)  # Function set (Interface is 8 bits long.)
-        utime.sleep_us(100)  # Wait for more than 100 µs
+        utime.sleep_us(100)  # Wait for more than 100 µs.
         self.__send_instructions(0x30)  # Function set (Interface is 8 bits long.)
 
-        # Function set: interface mode, number of lines (rows), and font size
+        # Function set: interface mode, number of lines (rows), and font size.
         self.__send_instructions(Instruction.FUNCTION_SET >> 4)
-        self.__send_instructions(
-            Instruction.FUNCTION_SET | self.__data_len | self.__num_row | self.__font_size
-        )
+        self.__send_instructions(Instruction.FUNCTION_SET | self.__data_len | self.__num_row | self.__font_size)
 
-        self.display_on()  # Display control: Display on, cursor and blink off
-        self.clear_display()  # Clear display
+        self.display_on()  # Display control: Display on, cursor and blink off.
+        self.clear_display()  # Clear display.
 
-        # Entry mode set: Increment display, No shift
+        # Entry mode set: Increment display, No shift.
         self.__send_instructions(Instruction.ENTRY_MODE_SET | Instruction.INCREMENT)
 
 

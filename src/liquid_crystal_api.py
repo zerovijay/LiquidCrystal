@@ -7,7 +7,7 @@ from .instructions import Instruction
 class HD44780API:
     __ROWS: tuple = const((1, 2, 4))
     __COLUMNS: tuple = const((16, 20))
-    __RAM_MIN, __RAM_MAX = const((0, 7))  # Range of valid CGRAM locations
+    __RAM_MIN, __RAM_MAX = const((0, 7))  # Range of valid CGRAM locations.
 
     def __init__(self, row: int, col: int) -> None:
         """
@@ -80,9 +80,7 @@ class HD44780API:
 
         :return: None
         """
-        self.__send_instructions(
-            Instruction.DISPLAY_CONTROL | Instruction.DISPLAY | Instruction.CURSOR
-        )
+        self.__send_instructions(Instruction.DISPLAY_CONTROL | Instruction.DISPLAY | Instruction.CURSOR)
 
     def display_no_cursor(self) -> None:
         """
@@ -99,10 +97,7 @@ class HD44780API:
         :return: None
         """
         self.__send_instructions(
-            Instruction.DISPLAY_CONTROL
-            | Instruction.DISPLAY
-            | Instruction.CURSOR
-            | Instruction.BLINK
+            Instruction.DISPLAY_CONTROL | Instruction.DISPLAY | Instruction.CURSOR | Instruction.BLINK
         )
 
     def cursor_no_blink(self) -> None:
@@ -111,9 +106,7 @@ class HD44780API:
 
         :return: None
         """
-        self.__send_instructions(
-            Instruction.DISPLAY_CONTROL | Instruction.DISPLAY | Instruction.CURSOR
-        )
+        self.__send_instructions(Instruction.DISPLAY_CONTROL | Instruction.DISPLAY | Instruction.CURSOR)
 
     def display_shift_left(self) -> None:
         """
@@ -121,9 +114,7 @@ class HD44780API:
 
         :return: None
         """
-        self.__send_instructions(
-            Instruction.CRD_SHIFT | Instruction.DISPLAY_SHIFT | Instruction.SHIFT_LEFT
-        )
+        self.__send_instructions(Instruction.CRD_SHIFT | Instruction.DISPLAY_SHIFT | Instruction.SHIFT_LEFT)
 
     def display_shift_right(self) -> None:
         """
@@ -131,9 +122,7 @@ class HD44780API:
 
         :return: None
         """
-        self.__send_instructions(
-            Instruction.CRD_SHIFT | Instruction.DISPLAY_SHIFT | Instruction.SHIFT_RIGHT
-        )
+        self.__send_instructions(Instruction.CRD_SHIFT | Instruction.DISPLAY_SHIFT | Instruction.SHIFT_RIGHT)
 
     def cursor_shift_left(self) -> None:
         """
@@ -141,9 +130,7 @@ class HD44780API:
 
         :return: None
         """
-        self.__send_instructions(
-            Instruction.CRD_SHIFT | Instruction.CURSOR_MOVE | Instruction.SHIFT_LEFT
-        )
+        self.__send_instructions(Instruction.CRD_SHIFT | Instruction.CURSOR_MOVE | Instruction.SHIFT_LEFT)
 
     def cursor_shift_right(self) -> None:
         """
@@ -151,9 +138,7 @@ class HD44780API:
 
         :return: None
         """
-        self.__send_instructions(
-            Instruction.CRD_SHIFT | Instruction.CURSOR_MOVE | Instruction.SHIFT_RIGHT
-        )
+        self.__send_instructions(Instruction.CRD_SHIFT | Instruction.CURSOR_MOVE | Instruction.SHIFT_RIGHT)
 
     def set_cursor(self, row: int, col: int) -> None:
         """
@@ -184,39 +169,34 @@ class HD44780API:
         :return: None
         """
         for char in str(data):
-            self.__send_instructions(ord(char), rs=True)  # RS: 1 -> Sending data
+            self.__send_instructions(ord(char), rs=True)  # RS: 1 -> Sending data.
 
-    def custom_character(self, ram_addr: int, bit_map: tuple = None) -> None:
+    def custom_character(self, ram_addr: int, bit_map: tuple | list) -> None:
         """
         Defines a custom character at the specified CGRAM address with the given bit map.
 
         :param ram_addr: The CGRAM address (0 to 7) where the character will be stored.
-        :param bit_map: The bit map representing the custom character (optional).
-        :raises IndexError: If invalid, CGRAM address or bit map values are provided.
+        :param bit_map: The bit map representing the custom character.
+        :raises IndexError: If invalid, CGRAM address or bit map length are provided.
         :return: None
         """
         # Check if ram_addr is within the valid range
         if not self.__RAM_MIN <= ram_addr <= self.__RAM_MAX:
             raise IndexError("Invalid ram address! ram address must be in the range of 0 to 7.")
 
-        # Mask ram_addr to ensure it's within the 7 available ram locations
-        ram_addr &= 0x07  # We have only 7 ram locations to store.
-
-        # Handle the case where bit_map is not provided
-        if bit_map is None:
-            self.__send_instructions(ram_addr, rs=True)  # RS: 1 -> Sending data
-            return
-
         # Check if the length of bit_map is within the valid range
         if not 0 <= len(bit_map) <= 8:
             raise IndexError(f"Invalid bit_map length! It must be in the range of 0 to 8.")
 
-        # Set the CGRAM address using the provided ram_addr
+        # Mask ram_addr to ensure it's within the 7 available ram locations.
+        ram_addr &= 0x07  # We have only 7 ram locations to store.
+
+        # Set the CGRAM address using the provided ram_addr.
         self.__send_instructions(Instruction.CGRAM_ADDR | (ram_addr << 3))
 
         # Load the bit map into the CGRAM
         for bit in bit_map:
-            self.__send_instructions(bit, rs=True)  # RS: 1 -> Sending data
+            self.__send_instructions(bit, rs=True)  # RS: 1 -> Sending data.
 
 
 # THE END

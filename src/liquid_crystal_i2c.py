@@ -2,21 +2,19 @@ import utime
 from machine import I2C
 from micropython import const
 
-from .gpio_expander import GpioExpander
+from .PCF8574T import PCF8574
 from .instructions import Instruction
 from .liquid_crystal_api import HD44780API
 
 
 class LiquidCrystal_I2C(HD44780API):
-    # Pin mapping for RS, RW, EN, and BACKLIGHT
-    __RS, __RW, __EN, __BACKLIGHT = const((0, 1, 2, 3))
+    # Pin mapping for RS, RW, EN, and BACKLIGHT.
+    __RS, __RW, __EN, __BL = const((0, 1, 2, 3))
 
-    # Macro for Font size
+    # Macro for Font size.
     FONT5X8, FONT5X10 = const((Instruction.FONT5X8, Instruction.FONT5X10))
 
-    def __init__(
-        self, port: I2C, addr: int = 0x27, row: int = 2, col: int = 16, font: int = FONT5X8
-    ) -> None:
+    def __init__(self, port: I2C, addr: int = 0x27, row: int = 2, col: int = 16, font: int = FONT5X8) -> None:
         """
         Initialize the I2C-based LCD object.
 
@@ -28,7 +26,7 @@ class LiquidCrystal_I2C(HD44780API):
         :raises TypeError: If the provided port is not a valid I2C object.
         """
         super().__init__(row, col)
-        self.__io_exp = GpioExpander(port, addr)  # GPIO Expander object
+        self.__io_exp = PCF8574(port, addr)  # GPIO Expander object.
 
         # Set GPIO pins as output
         for pin in range(self.__io_exp.PIN_MIN, self.__io_exp.PIN_MAX):
@@ -36,7 +34,7 @@ class LiquidCrystal_I2C(HD44780API):
 
         self.__num_row = Instruction.LINE2 if row >= 2 else Instruction.LINE1
         self.__font_size: int = font
-        self.__init_lcd()  # Initialize the LCD
+        self.__init_lcd()  # Initialize the LCD.
 
     def __toggle_enable(self) -> None:
         """
@@ -44,8 +42,6 @@ class LiquidCrystal_I2C(HD44780API):
 
         :return: None
         """
-        self.__io_exp.digital_write(self.__EN, False)
-        utime.sleep_us(40)
         self.__io_exp.digital_write(self.__EN, True)
         utime.sleep_us(40)
         self.__io_exp.digital_write(self.__EN, False)
@@ -60,7 +56,7 @@ class LiquidCrystal_I2C(HD44780API):
         for pin, bit in enumerate(range(4), start=4):
             self.__io_exp.digital_write(pin, (nibble >> bit) & 0x01)
 
-        # Toggle to enable. To execute previously received data
+        # Toggle to enable. To execute previously received data.
         self.__toggle_enable()
 
     def __send_instructions(self, data: int, rs: bool = False) -> None:
@@ -74,11 +70,11 @@ class LiquidCrystal_I2C(HD44780API):
         msb_data: int = (data >> 4) & 0x0F
         lsb_data: int = data & 0x0F
 
-        # Set RS and RW signals
+        # Set RS and RW signals.
         self.__io_exp.digital_write(self.__RS, rs)
-        self.__io_exp.digital_write(self.__RW, False)  # RW: 0 (Write mode)
+        self.__io_exp.digital_write(self.__RW, False)  # RW: 0 (Write mode).
 
-        # Send high nibble (MSB) first, followed by low nibble (LSB)
+        # Send high nibble (MSB) first, followed by low nibble (LSB).
         self.__write_nibble(msb_data)
         self.__write_nibble(lsb_data)
 
@@ -92,8 +88,8 @@ class LiquidCrystal_I2C(HD44780API):
         if not isinstance(status, bool):
             raise ValueError("Backlight 'status' must be a boolean (True or False).")
 
-        # Set the 3rd pin 'PB3' for the LCD backlight
-        self.__io_exp.digital_write(self.__BACKLIGHT, status)
+        # Set the 3rd pin 'PB3' for the LCD backlight.
+        self.__io_exp.digital_write(self.__BL, status)
 
     def __init_lcd(self) -> None:
         """
@@ -101,24 +97,22 @@ class LiquidCrystal_I2C(HD44780API):
 
         :return: None
         """
-        # Wait for more than 40 ms after VCC rises to 2.7 V
+        # Wait for more than 40 ms after VCC rises to 2.7 V.
         utime.sleep_ms(50)
         self.__send_instructions(0x03)  # Function set (Interface is 8 bits long.)
-        utime.sleep_ms(5)  # Wait for more than 4.1 ms
+        utime.sleep_ms(5)  # Wait for more than 4.1 ms.
         self.__send_instructions(0x03)  # Function set (Interface is 8 bits long.)
-        utime.sleep_us(100)  # Wait for more than 100 µs
+        utime.sleep_us(100)  # Wait for more than 100 µs.
         self.__send_instructions(0x03)  # Function set (Interface is 8 bits long.)
 
-        # Function set: 4-bit mode, display lines, font size
+        # Function set: 4-bit mode, display lines, font size.
         self.__send_instructions(Instruction.FUNCTION_SET >> 4)
-        self.__send_instructions(
-            Instruction.FUNCTION_SET | Instruction.LEN_4BIT | self.__num_row | self.__font_size
-        )
+        self.__send_instructions(Instruction.FUNCTION_SET | Instruction.LEN_4BIT | self.__num_row | self.__font_size)
 
-        self.display_on()  # Display control: Display on, cursor and blink off
-        self.clear_display()  # Clear display
+        self.display_on()  # Display control: Display on, cursor and blink off.
+        self.clear_display()  # Clear display.
 
-        # Entry mode set: Increment display, No shift
+        # Entry mode set: Increment display, No shift.
         self.__send_instructions(Instruction.ENTRY_MODE_SET | Instruction.INCREMENT)
 
 
