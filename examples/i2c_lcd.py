@@ -18,7 +18,7 @@ def main() -> None:
     while True:
         for i in range(100):
             lcd.set_cursor(1, 0)  # allocate space for print variable.
-            lcd.print("       ")  # Fill some space for avoid display clear.
+            lcd.print("       ")
             lcd.set_cursor(1, 0)
             lcd.print(i)  # Print the variable.
             utime.sleep_ms(500)

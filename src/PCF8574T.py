@@ -3,7 +3,7 @@ from machine import I2C
 from micropython import const
 
 
-class PCF8574:
+class PCF8574T:
     # Constants (MACRO) representing pin modes and pin range.
     DEFAULT_ADDR: int = const(0x20)
     PIN_MIN, PIN_MAX = const((0, 7))

@@ -61,7 +61,7 @@ LCDs with 1, 2, or 4 rows and 16 or 20 columns, providing flexibility. Font cust
 from LiquidCrystal import LiquidCrystal
 
 # Example GPIO pin configuration (8-bit mode)
-gpio_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+gpio_list = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 
 # Initialize GPIO-based LCD
 lcd = LiquidCrystal(gpio_list)
@@ -78,14 +78,14 @@ from machine import I2C, Pin
 from LiquidCrystal import LiquidCrystal_I2C
 
 # Example I2C configuration
-i2c_port = I2C(0, scl=Pin(1), sda=Pin(0), freq=100000)
+i2c = I2C(0, scl=Pin(1), sda=Pin(0), freq=100000)
 
 # Initialize I2C-based LCD
-lcd_i2c = LiquidCrystal_I2C(i2c_port)
+lcd = LiquidCrystal_I2C(i2c)
 
 # Display some text with backlight on
-lcd_i2c.backlight(status=True)
-lcd_i2c.print("Hello, World!")
+lcd.backlight(status=True)
+lcd.print("Hello, World!")
 ```
 
 ### Example Usage
@@ -94,8 +94,6 @@ lcd_i2c.print("Hello, World!")
 import utime
 from machine import I2C, Pin
 from LiquidCrystal import LiquidCrystal_I2C
-
-custom_char: list[int] = [0x00, 0x04, 0x0E, 0x0E, 0x0E, 0x1F, 0x04, 0x00]
 
 
 def main():
@@ -108,10 +106,6 @@ def main():
     lcd.clear_display()
     lcd.set_cursor(0, 0)
     lcd.print("Hello, World!")
-
-    lcd.custom_character(0, custom_char)
-    lcd.set_cursor(1, 7)
-    lcd.custom_character(0)
 
     while True:
         for i in range(100):
@@ -144,10 +138,10 @@ hobbyist to test their code before deploying it to hardware.
 - `display_shift_left()`, `display_shift_right()`: Shift the entire display to the left or right.
 - `cursor_shift_left()`, `cursor_shift_right()`: Shift the cursor position to the left or right.
 - `set_cursor(row: int, col: int)`: Set the cursor to the specified row and column.
-- `print(data: any)`: Print the given data on the LCD.
-- `custom_character(ram_addr: int, bit_map: list[int] = None)`: Define a custom character at the specified CGRAM address
-  with the given bit map. This method can also be used as an overloaded print method for printing characters stored in
-  CGRAM.
+- `print(data: any)`: To print the given data on the LCD, `print(chr(custom_char))`: To print custom character on the
+  LCD.
+- `custom_character(ram_addr: int, bit_map: list | tuple)`: Define a custom character at the specified CGRAM address
+  with the given bit map.
 
 ## Contributing
 
