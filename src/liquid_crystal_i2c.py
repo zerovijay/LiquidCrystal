@@ -2,7 +2,7 @@ import utime
 from machine import I2C
 from micropython import const
 
-from .PCF8574T import PCF8574
+from .PCF8574T import PCF8574T
 from .instructions import Instruction
 from .liquid_crystal_api import HD44780API
 
@@ -26,7 +26,7 @@ class LiquidCrystal_I2C(HD44780API):
         :raises TypeError: If the provided port is not a valid I2C object.
         """
         super().__init__(row, col)
-        self.__io_exp = PCF8574(port, addr)  # GPIO Expander object.
+        self.__io_exp = PCF8574T(port, addr)  # GPIO Expander object.
 
         # Set GPIO pins as output
         for pin in range(self.__io_exp.PIN_MIN, self.__io_exp.PIN_MAX):
