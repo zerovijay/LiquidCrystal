@@ -2,9 +2,9 @@ import utime
 from machine import I2C
 from micropython import const
 
-from .PCF8574T import PCF8574T
 from .instructions import Instruction
 from .liquid_crystal_api import HD44780API
+from ..lib.PCF8574T import PCF8574T
 
 
 class LiquidCrystal_I2C(HD44780API):
@@ -30,9 +30,9 @@ class LiquidCrystal_I2C(HD44780API):
 
         # Set GPIO pins as output
         for pin in range(self.__io_exp.PIN_MIN, self.__io_exp.PIN_MAX):
-            self.__io_exp.pin_mode(pin, self.__io_exp.OUTPUT)
+            self.__io_exp.set_gpio_mode(pin, self.__io_exp.OUTPUT)
 
-        self.__num_row = Instruction.LINE2 if row >= 2 else Instruction.LINE1
+        self.__num_row = Instruction.DISPLAY_2LINE if row >= 2 else Instruction.DISPLAY_1LINE
         self.__font_size: int = font
         self.__init_lcd()  # Initialize the LCD.
 
@@ -42,9 +42,9 @@ class LiquidCrystal_I2C(HD44780API):
 
         :return: None
         """
-        self.__io_exp.digital_write(self.__EN, True)
+        self.__io_exp.gpio_write(self.__EN, True)
         utime.sleep_us(40)
-        self.__io_exp.digital_write(self.__EN, False)
+        self.__io_exp.gpio_write(self.__EN, False)
 
     def __write_nibble(self, nibble: int) -> None:
         """
@@ -54,7 +54,7 @@ class LiquidCrystal_I2C(HD44780API):
         :return: None
         """
         for pin, bit in enumerate(range(4), start=4):
-            self.__io_exp.digital_write(pin, (nibble >> bit) & 0x01)
+            self.__io_exp.gpio_write(pin, (nibble >> bit) & 0x01)
 
         # Toggle to enable. To execute previously received data.
         self.__toggle_enable()
@@ -71,8 +71,8 @@ class LiquidCrystal_I2C(HD44780API):
         lsb_data: int = data & 0x0F
 
         # Set RS and RW signals.
-        self.__io_exp.digital_write(self.__RS, rs)
-        self.__io_exp.digital_write(self.__RW, False)  # RW: 0 (Write mode).
+        self.__io_exp.gpio_write(self.__RS, rs)
+        self.__io_exp.gpio_write(self.__RW, False)  # RW: 0 (Write mode).
 
         # Send high nibble (MSB) first, followed by low nibble (LSB).
         self.__write_nibble(msb_data)
@@ -89,7 +89,7 @@ class LiquidCrystal_I2C(HD44780API):
             raise ValueError("Backlight 'status' must be a boolean (True or False).")
 
         # Set the 3rd pin 'PB3' for the LCD backlight.
-        self.__io_exp.digital_write(self.__BL, status)
+        self.__io_exp.gpio_write(self.__BL, status)
 
     def __init_lcd(self) -> None:
         """

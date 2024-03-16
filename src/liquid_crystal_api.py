@@ -5,10 +5,6 @@ from .instructions import Instruction
 
 
 class HD44780API:
-    __ROWS: tuple = const((1, 2, 4))
-    __COLUMNS: tuple = const((16, 20))
-    __RAM_MIN, __RAM_MAX = const((0, 7))  # Range of valid CGRAM locations.
-
     def __init__(self, row: int, col: int) -> None:
         """
         Initialize the HD44780API object.
@@ -17,15 +13,15 @@ class HD44780API:
         :param col: Number of columns on the display (16 or 20).
         :raises ValueError: If row or col is invalid.
         """
-        if row not in self.__ROWS:
+        if row not in (1, 2, 4):
             raise ValueError("Invalid row! 'row' must be 1, 2, or 4.")
 
-        if col not in self.__COLUMNS:
+        if col not in (16, 20):
             raise ValueError("Invalid col! 'col' must be 16 or 20.")
 
         self._row: int = row
         self._col: int = col
-        self.__num_row = Instruction.LINE2 if row >= 2 else Instruction.LINE1
+        self.__num_row = Instruction.DISPLAY_2LINE if row >= 2 else Instruction.DISPLAY_1LINE
 
     def __send_instructions(self, data: int, rs: bool = False) -> None:
         """
@@ -149,7 +145,7 @@ class HD44780API:
         :raises IndexError: If invalid, row or column values are provided.
         :return: None
         """
-        if self.__num_row == Instruction.LINE1 and row != 0:
+        if self.__num_row == Instruction.DISPLAY_1LINE and row != 0:
             raise IndexError("Invalid row! Single-line display only supports row 0.")
 
         if not (0 <= row < self._row):
@@ -181,8 +177,8 @@ class HD44780API:
         :return: None
         """
         # Check if ram_addr is within the valid range
-        if not self.__RAM_MIN <= ram_addr <= self.__RAM_MAX:
-            raise IndexError("Invalid ram address! ram address must be in the range of 0 to 7.")
+        if not 0 <= ram_addr <= 7:
+            raise IndexError("Invalid CGRAM address! CGRAM address must be in the range of 0 to 7.")
 
         # Check if the length of bit_map is within the valid range
         if not 0 <= len(bit_map) <= 8:

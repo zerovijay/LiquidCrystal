@@ -7,8 +7,8 @@ from .liquid_crystal_api import HD44780API
 
 
 class LiquidCrystal(HD44780API):
-    __GPIO_LEN: tuple = const((7, 11))  # GPIO list maximum length.
-    __RS, __RW, __EN = const((0, 1, 2))  # RS, RW and EN Pin mapping.
+    # Pin mapping for RS, RW and EN
+    __RS, __RW, __EN = const((0, 1, 2))
 
     FONT5X8, FONT5X10 = const((Instruction.FONT5X8, Instruction.FONT5X10))
 
@@ -24,17 +24,15 @@ class LiquidCrystal(HD44780API):
         """
         super().__init__(row, col)
 
-        if len(gpio_list) not in self.__GPIO_LEN:
-            raise ValueError(
-                f"Invalid GPIO list! Expected {self.__GPIO_LEN} GPIO pins, but received {len(gpio_list)} pins."
-            )
+        if len(gpio_list) not in (7, 11):
+            raise ValueError(f"Invalid GPIO list! Expected (7, 11) GPIO pins, but received {len(gpio_list)} pins.")
 
         # predict mode base on len of gpio_list.
         self.__data_len: int = Instruction.LEN_8BIT if len(gpio_list) >= 11 else Instruction.LEN_4BIT
 
         # List of 'Pin' objects, row and font size.
         self.__gpio_list: list[Pin] = [Pin(pin, Pin.OUT) for pin in gpio_list]
-        self.__num_row = Instruction.LINE2 if row >= 2 else Instruction.LINE1
+        self.__num_row = Instruction.DISPLAY_2LINE if row >= 2 else Instruction.DISPLAY_1LINE
         self.__font_size: int = font
         self.__init_lcd()  # Initialize the LCD.
 
@@ -48,7 +46,7 @@ class LiquidCrystal(HD44780API):
         utime.sleep_us(40)
         self.__gpio_list[self.__EN].value(False)
 
-    def __write_gpio(self, write_data: int, mode: int = 8) -> None:
+    def __gpio_write(self, write_data: int, mode: int = 8) -> None:
         """
         Writes data to the GPIO pins.
 
@@ -78,11 +76,11 @@ class LiquidCrystal(HD44780API):
             msb_data: int = (data >> 4) & 0x0F
             lsb_data: int = data & 0x0F
 
-            self.__write_gpio(msb_data, 4)  # MSB
-            self.__write_gpio(lsb_data, 4)  # LSB
+            self.__gpio_write(msb_data, 4)  # MSB
+            self.__gpio_write(lsb_data, 4)  # LSB
             return
 
-        self.__write_gpio(data)  # Write 8-bit mode.
+        self.__gpio_write(data)  # Else Write 8-bit mode.
 
     @staticmethod
     def backlight(pin: int, status: bool) -> None:

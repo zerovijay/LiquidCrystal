@@ -1,0 +1,3 @@
+[submodule "lib/PCF8574T"]
+	path = lib/PCF8574T
+	url = https://github.com/zerovijay/PCF8574T.git
