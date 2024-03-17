@@ -45,13 +45,14 @@ LCDs with 1, 2, or 4 rows and 16 or 20 columns, providing flexibility. Font cust
 
 ## Installation
 
-1. Clone the repository:
+Clone the repository:
 
-    ```bash
-    git clone https://github.com/zerovijay/LiquidCrystal.git
-    ```
-
-2. Integrate the LiquidCrystal module into your project directory.
+```bash
+git clone https://github.com/zerovijay/LiquidCrystal.git
+cd LiquidCrystal 
+git submodule init
+git submodule update
+```
 
 ## Getting Started
 
